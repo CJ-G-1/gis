@@ -1,0 +1,173 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>地图作业</title>
+
+  <!-- 你提供的正确 GeoScene 4.32 API -->
+  <link rel="stylesheet" href="https://js.geoscene.cn/4.32/geoscene/themes/light/main.css">
+  <script src="https://js.geoscene.cn/4.32/"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+    /* 页眉 */
+    .header {
+      height: 60px;
+      background: linear-gradient(90deg, #005AA7, #003D70);
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 22px;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    /* 主容器 */
+    .main {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+    /* 左侧面板 */
+    .leftPanel {
+      width: 240px;
+      background: #f5f7fa;
+      border-right: 1px solid #ddd;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .leftPanel h3 {
+      margin-bottom: 12px;
+      color: #333;
+      border-bottom: 2px solid #005AA7;
+      padding-bottom: 6px;
+    }
+    .item {
+      padding: 10px;
+      background: white;
+      border-radius: 5px;
+      margin: 8px 0;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .item:hover {
+      background: #e3f2fd;
+      color: #005AA7;
+    }
+    /* 地图区域 */
+    #viewDiv {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 1. 页眉 -->
+  <div class="header">综合地图应用</div>
+
+  <div class="main">
+    <!-- 2. 左侧面板 -->
+    <div class="leftPanel">
+      <h3>底图切换</h3>
+      <div class="item" data="tianditu-vector">天地图矢量</div>
+      <div class="item" data="tianditu-image">天地图影像</div>
+
+      <h3 style="margin-top:20px">专题图层切换</h3>
+      <div class="item" id="showCovid">全球新冠疫情图层</div>
+      <div class="item" id="showMarket">北京摆摊地点图层</div>
+    </div>
+
+    <!-- 3. 地图区域 -->
+    <div id="viewDiv"></div>
+  </div>
+
+  <script>
+    require([
+      "geoscene/config",
+      "geoscene/Map",
+      "geoscene/views/MapView",
+      "geoscene/layers/FeatureLayer",
+      "geoscene/widgets/ScaleBar",
+      "geoscene/widgets/Legend",
+      "geoscene/widgets/Search",
+      "geoscene/widgets/LayerList"
+    ], function(
+      geosceneConfig, Map, MapView,
+      FeatureLayer,
+      ScaleBar, Legend, Search, LayerList
+    ) {
+
+      // 地图初始化
+      const map = new Map({ basemap: "tianditu-vector" });
+
+      // 视图
+      const view = new MapView({
+        map: map,
+        center: [111.4, 37.9],
+        zoom: 4,
+        container: "viewDiv"
+      });
+
+      // ------------------------------
+      // 1. 疫情图层
+      // ------------------------------
+      const covidLayer = new FeatureLayer({
+        url: "https://www.geosceneonline.cn/server/rest/services/Hosted/新型冠状病毒疫情全球病例统计new/FeatureServer/0",
+        title: "全球新冠疫情统计",
+        visible: false
+      });
+      map.add(covidLayer);
+
+      // ------------------------------
+      // 2. 北京摆摊地点图层
+      // ------------------------------
+      const beijingMarketLayer = new FeatureLayer({
+        url: "https://www.geosceneonline.cn/server/rest/services/Hosted/北京摆摊地点/FeatureServer/0",
+        title: "北京摆摊地点",
+        visible: false
+      });
+      map.add(beijingMarketLayer);
+
+      // ------------------------------
+      // 3. 必选微件
+      // ------------------------------
+      view.ui.add(new ScaleBar({ view, unit: "metric" }), "bottom-left");
+      view.ui.add(new Legend({ view }), "bottom-right");
+      view.ui.add(new Search({ view }), "top-left");
+      view.ui.add(new LayerList({ view }), "top-right");
+
+      // ------------------------------
+      // 4. 底图切换
+      // ------------------------------
+      view.when(() => {
+        document.querySelectorAll(".item[data]").forEach(item => {
+          item.onclick = () => {
+            map.basemap = item.getAttribute("data");
+          };
+        });
+
+        // ------------------------------
+        // 5. 图层二选一切换
+        // ------------------------------
+        // 显示疫情
+        document.getElementById("showCovid").onclick = () => {
+          covidLayer.visible = true;
+          beijingMarketLayer.visible = false;
+        };
+
+        // 显示北京摆摊地点
+        document.getElementById("showMarket").onclick = () => {
+          beijingMarketLayer.visible = true;
+          covidLayer.visible = false;
+        };
+      });
+
+    });
+  </script>
+</body>
+</html>
